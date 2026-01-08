@@ -1,0 +1,16 @@
+{
+    "java.project.sourcePaths": ["src"],
+    "java.project.outputPath": "bin",
+    "java.project.referencedLibraries": [
+      "lib/**/*.jar"
+    ],
+    "java.configuration.runtimes": [
+      {
+        "name": "JavaSE-21",
+        "path": "C:/Users/lamth/.jdk/jdk-21.0.8",
+        "default": true
+      }
+    ],
+    "java.configuration.defaultRuntime": "JavaSE-21",
+    "maven.executable.path": "C:/Users/lamth/.maven/maven-3.9.12/bin/mvn.cmd"
+}
