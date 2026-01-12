@@ -29,8 +29,9 @@ public class CheckoutPanel extends JPanel {
     private final CheckoutUseCase checkoutUseCase;
     private final Runnable onCheckoutSuccess;
 
-    private final JComboBox<String> bookingCombo = new JComboBox<>();
+    private final JComboBox<RoomBookingItem> roomCombo = new JComboBox<>();
     private final JTextField bookingIdField = new JTextField();
+    private List<SimpleBookingDTO> activeBookings = new ArrayList<>();
     private final JLabel roomTotalLabel = new JLabel("-");
     private final JLabel servicesTotalLabel = new JLabel("-");
     private final JLabel grandTotalLabel = new JLabel("-");
@@ -52,8 +53,8 @@ public class CheckoutPanel extends JPanel {
         add(buildContent(), BorderLayout.CENTER);
         add(buildFooter(), BorderLayout.SOUTH);
 
-        reloadBookings();
         styleTable();
+        reloadBookings();
     }
     
     // Set room ID để thanh toán từ RoomsPanel
@@ -62,18 +63,24 @@ public class CheckoutPanel extends JPanel {
             showError("Không tìm thấy booking ACTIVE cho phòng");
             return;
         }
-        List<SimpleBookingDTO> actives = listActiveBookingsUseCase.execute();
-        SimpleBookingDTO match = actives.stream()
+        reloadBookings();
+        SimpleBookingDTO match = activeBookings.stream()
                 .filter(b -> roomId.equalsIgnoreCase(b.roomId()))
                 .findFirst()
                 .orElse(null);
         if (match != null) {
-            bookingIdField.setText(match.bookingId());
-            bookingCombo.setSelectedItem(match.bookingId());
+            // Tìm và chọn item trong combo
+            for (int i = 0; i < roomCombo.getItemCount(); i++) {
+                RoomBookingItem item = roomCombo.getItemAt(i);
+                if (item.booking.bookingId().equals(match.bookingId())) {
+                    roomCombo.setSelectedIndex(i);
+                    break;
+                }
+            }
             SwingUtilities.invokeLater(this::handleCalculate);
         } else {
             bookingIdField.setText("");
-            bookingCombo.setSelectedItem(null);
+            roomCombo.setSelectedItem(null);
             showError("Không tìm thấy booking ACTIVE cho phòng " + roomId);
         }
     }
@@ -131,7 +138,7 @@ public class CheckoutPanel extends JPanel {
 
         int row = 0;
         addRow(panel, gbc, row++, "Mã booking (nhập tay)", bookingIdField);
-        addRow(panel, gbc, row++, "Booking đang ACTIVE", bookingCombo);
+        addRow(panel, gbc, row++, "Phòng đang sử dụng", roomCombo);
 
         JButton calcBtn = new JButton("Tính tiền");
         calcBtn.setFont(LABEL_FONT);
@@ -211,16 +218,17 @@ public class CheckoutPanel extends JPanel {
     }
 
     private void reloadBookings() {
-        bookingCombo.removeAllItems();
-        listActiveBookingsUseCase.execute().forEach(b -> bookingCombo.addItem(b.bookingId()));
+        roomCombo.removeAllItems();
+        activeBookings = listActiveBookingsUseCase.execute();
+        activeBookings.forEach(b -> roomCombo.addItem(new RoomBookingItem(b)));
     }
 
     private String resolveBookingId() {
         if (bookingIdField.getText() != null && !bookingIdField.getText().isBlank()) {
             return bookingIdField.getText().trim();
         }
-        Object selected = bookingCombo.getSelectedItem();
-        return selected == null ? null : selected.toString();
+        RoomBookingItem selected = (RoomBookingItem) roomCombo.getSelectedItem();
+        return selected == null ? null : selected.booking.bookingId();
     }
 
     private void handleCalculate() {
@@ -311,6 +319,20 @@ public class CheckoutPanel extends JPanel {
 
         public List<ServiceLineDTO> getData() {
             return data;
+        }
+    }
+    
+    // Class để hiển thị tên phòng trong combo box
+    private static class RoomBookingItem {
+        private final SimpleBookingDTO booking;
+        
+        public RoomBookingItem(SimpleBookingDTO booking) {
+            this.booking = booking;
+        }
+        
+        @Override
+        public String toString() {
+            return booking.roomId() + " (Booking: " + booking.bookingId().substring(0, Math.min(8, booking.bookingId().length())) + "...)";
         }
     }
 }

@@ -9,9 +9,12 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 public class RevenuePanel extends JPanel {
@@ -22,14 +25,23 @@ public class RevenuePanel extends JPanel {
     private static final Font LABEL_FONT = new Font("Segoe UI", Font.PLAIN, 13);
     private final GetRevenueReportUseCase getRevenueReportUseCase;
 
-    private final JTextField fromField = new JTextField();
-    private final JTextField toField = new JTextField();
+    private final JSpinner fromSpinner;
+    private final JSpinner toSpinner;
     private final JLabel totalLabel = new JLabel("-");
     private final JLabel countLabel = new JLabel("-");
     private final JTable dailyTable = new JTable(new DailyTableModel());
 
     public RevenuePanel(GetRevenueReportUseCase getRevenueReportUseCase) {
         this.getRevenueReportUseCase = getRevenueReportUseCase;
+        
+        // Khởi tạo date spinners
+        this.fromSpinner = createDateSpinner();
+        this.toSpinner = createDateSpinner();
+        // Set mặc định: từ đầu tháng đến hôm nay
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.DAY_OF_MONTH, 1);
+        fromSpinner.setValue(cal.getTime());
+        
         setLayout(new BorderLayout());
         setBackground(CONTENT_BG);
         setBorder(new EmptyBorder(15, 20, 15, 20));
@@ -37,6 +49,16 @@ public class RevenuePanel extends JPanel {
         add(buildContent(), BorderLayout.CENTER);
         add(buildFooter(), BorderLayout.SOUTH);
         styleTable();
+    }
+    
+    private JSpinner createDateSpinner() {
+        SpinnerDateModel model = new SpinnerDateModel();
+        JSpinner spinner = new JSpinner(model);
+        JSpinner.DateEditor editor = new JSpinner.DateEditor(spinner, "dd/MM/yyyy");
+        spinner.setEditor(editor);
+        spinner.setFont(LABEL_FONT);
+        spinner.setPreferredSize(new Dimension(250, 32));
+        return spinner;
     }
 
     private void styleTable() {
@@ -99,8 +121,8 @@ public class RevenuePanel extends JPanel {
         gbc.weightx = 1;
 
         int row = 0;
-        addRow(panel, gbc, row++, "Từ (yyyy-mm-dd)", fromField);
-        addRow(panel, gbc, row++, "Đến (yyyy-mm-dd)", toField);
+        addRow(panel, gbc, row++, "Từ ngày", fromSpinner);
+        addRow(panel, gbc, row++, "Đến ngày", toSpinner);
 
         JButton btn = new JButton("Tạo báo cáo");
         btn.setFont(LABEL_FONT);
@@ -166,24 +188,23 @@ public class RevenuePanel extends JPanel {
     }
 
     private void handleGenerate() {
-        try {
-            LocalDate from = parseDate(fromField.getText());
-            LocalDate to = parseDate(toField.getText());
-            RevenueReportDTO dto = getRevenueReportUseCase.execute(from, to);
-            totalLabel.setText(dto.totalRevenue());
-            countLabel.setText(String.valueOf(dto.invoiceCount()));
-            ((DailyTableModel) dailyTable.getModel()).setData(dto.dailyLines());
-            JOptionPane.showMessageDialog(this, "Đã tạo báo cáo", "Doanh thu", JOptionPane.INFORMATION_MESSAGE);
-        } catch (DateTimeParseException ex) {
-            JOptionPane.showMessageDialog(this, "Ngày không hợp lệ (yyyy-mm-dd)", "Doanh thu", JOptionPane.ERROR_MESSAGE);
+        LocalDate from = dateToLocalDate((Date) fromSpinner.getValue());
+        LocalDate to = dateToLocalDate((Date) toSpinner.getValue());
+        
+        if (to.isBefore(from)) {
+            JOptionPane.showMessageDialog(this, "Ngày 'Đến' phải sau hoặc bằng ngày 'Từ'", "Doanh thu", JOptionPane.ERROR_MESSAGE);
+            return;
         }
+        
+        RevenueReportDTO dto = getRevenueReportUseCase.execute(from, to);
+        totalLabel.setText(dto.totalRevenue());
+        countLabel.setText(String.valueOf(dto.invoiceCount()));
+        ((DailyTableModel) dailyTable.getModel()).setData(dto.dailyLines());
+        JOptionPane.showMessageDialog(this, "Đã tạo báo cáo", "Doanh thu", JOptionPane.INFORMATION_MESSAGE);
     }
 
-    private LocalDate parseDate(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        return LocalDate.parse(value.trim(), DateTimeFormatter.ISO_LOCAL_DATE);
+    private LocalDate dateToLocalDate(Date date) {
+        return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
     }
 
     private static class DailyTableModel extends AbstractTableModel {

@@ -58,6 +58,14 @@ public class JdbcBookingRepository implements BookingRepository {
         String sql = "SELECT booking_id, room_id, customer_id, check_in_date, check_out_date, status, created_at FROM bookings";
         return query(sql, stmt -> {});
     }
+    
+    @Override
+    public Optional<Booking> findActiveByRoomId(String roomId) {
+        String sql = "SELECT booking_id, room_id, customer_id, check_in_date, check_out_date, status, created_at " +
+                     "FROM bookings WHERE room_id = ? AND status = 'ACTIVE' LIMIT 1";
+        List<Booking> list = query(sql, stmt -> stmt.setString(1, roomId));
+        return list.isEmpty() ? Optional.empty() : Optional.of(list.get(0));
+    }
 
     private List<Booking> query(String sql, SqlConsumer<PreparedStatement> binder) {
         List<Booking> bookings = new ArrayList<>();

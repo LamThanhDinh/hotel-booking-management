@@ -6,6 +6,9 @@ public record RoomDetailDTO(
         String roomType,
         String bedType,
         String price,
-        String status
+        String status,
+        String customerName,
+        String checkInDate,
+        String checkOutDate
 ) {
 }

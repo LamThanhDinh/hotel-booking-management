@@ -1,6 +1,7 @@
 package com.hotel.app.ui;
 
 import com.hotel.booking.ui.BookingPanel;
+import com.hotel.booking.ui.CustomersPanel;
 import com.hotel.rooms.ui.RoomsPanel;
 import com.hotel.services.ui.ServicesPanel;
 import com.hotel.checkout.ui.CheckoutPanel;
@@ -45,7 +46,7 @@ public class MainFrame extends JFrame {
     private JPanel[] menuButtons;
     private String[] menuNames;
 
-    public MainFrame(RoomsPanel roomsPanel, BookingPanel bookingPanel, ServicesPanel servicesPanel, CheckoutPanel checkoutPanel, RevenuePanel revenuePanel) {
+    public MainFrame(RoomsPanel roomsPanel, BookingPanel bookingPanel, ServicesPanel servicesPanel, CheckoutPanel checkoutPanel, RevenuePanel revenuePanel, CustomersPanel customersPanel) {
         super("Quản lý khách sạn");
         this.bookingPanel = bookingPanel;
         this.checkoutPanel = checkoutPanel;
@@ -56,7 +57,7 @@ public class MainFrame extends JFrame {
         setLocationRelativeTo(null);
 
         contentPanel.setBackground(CONTENT_BG);
-        initScreens(roomsPanel, bookingPanel, servicesPanel, checkoutPanel, revenuePanel);
+        initScreens(roomsPanel, bookingPanel, servicesPanel, checkoutPanel, revenuePanel, customersPanel);
         setLayout(new BorderLayout());
         add(buildSidebar(), BorderLayout.WEST);
         add(contentPanel, BorderLayout.CENTER);
@@ -101,12 +102,12 @@ public class MainFrame extends JFrame {
             menuButtons[menuIndex].repaint();
         }
     }
-    private void initScreens(RoomsPanel roomsPanel, BookingPanel bookingPanel, ServicesPanel servicesPanel, CheckoutPanel checkoutPanel, RevenuePanel revenuePanel) {
+    private void initScreens(RoomsPanel roomsPanel, BookingPanel bookingPanel, ServicesPanel servicesPanel, CheckoutPanel checkoutPanel, RevenuePanel revenuePanel, CustomersPanel customersPanel) {
         screens.put("Phòng", roomsPanel);
         screens.put("Đặt phòng", bookingPanel);
         screens.put("Thanh toán", checkoutPanel);
         screens.put("Dịch vụ", servicesPanel);
-        screens.put("Khách hàng", placeholder("Khách hàng"));
+        screens.put("Khách hàng", customersPanel);
         screens.put("Doanh thu", revenuePanel);
 
         screens.forEach((name, panel) -> {
@@ -357,8 +358,7 @@ public class MainFrame extends JFrame {
             getRootPane().getActionMap().put("switch" + i, new AbstractAction() {
                 @Override
                 public void actionPerformed(java.awt.event.ActionEvent e) {
-                    menu.setSelectedIndex(index);
-                    cardLayout.show(contentPanel, screenName);
+                    navigateTo(screenName, index);
                     updateStatus("Chuyển đến: " + screenName);
                 }
             });

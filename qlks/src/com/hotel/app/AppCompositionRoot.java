@@ -3,11 +3,13 @@ package com.hotel.app;
 import com.hotel.booking.application.BookingRepository;
 import com.hotel.booking.application.CreateBookingUseCase;
 import com.hotel.booking.application.CustomerRepository;
+import com.hotel.booking.application.ListCustomersUseCase;
 import com.hotel.booking.data.InMemoryBookingRepository;
 import com.hotel.booking.data.InMemoryCustomerRepository;
 import com.hotel.booking.data.JdbcBookingRepository;
 import com.hotel.booking.data.JdbcCustomerRepository;
 import com.hotel.booking.ui.BookingPanel;
+import com.hotel.booking.ui.CustomersPanel;
 import com.hotel.common.application.NoOpTransactionManager;
 import com.hotel.common.application.TransactionManager;
 import com.hotel.common.data.ConnectionProvider;
@@ -55,6 +57,7 @@ public class AppCompositionRoot {
     private final GetRoomDetailUseCase getRoomDetailUseCase;
     private final UpdateRoomStatusUseCase updateRoomStatusUseCase;
     private final CreateBookingUseCase createBookingUseCase;
+    private final ListCustomersUseCase listCustomersUseCase;
     private final ListAvailableServicesUseCase listAvailableServicesUseCase;
     private final AddServiceToBookingUseCase addServiceToBookingUseCase;
     private final com.hotel.services.application.ListActiveBookingsUseCase servicesListActiveBookingsUseCase;
@@ -91,9 +94,10 @@ public class AppCompositionRoot {
         }
 
         this.listRoomsUseCase = new ListRoomsUseCase(roomRepository);
-        this.getRoomDetailUseCase = new GetRoomDetailUseCase(roomRepository);
+        this.getRoomDetailUseCase = new GetRoomDetailUseCase(roomRepository, bookingRepository, customerRepository);
         this.updateRoomStatusUseCase = new UpdateRoomStatusUseCase(roomRepository);
         this.createBookingUseCase = new CreateBookingUseCase(bookingRepository, customerRepository, roomRepository);
+        this.listCustomersUseCase = new ListCustomersUseCase(customerRepository);
         this.listAvailableServicesUseCase = new ListAvailableServicesUseCase(serviceRepository);
         this.addServiceToBookingUseCase = new AddServiceToBookingUseCase(serviceRepository, serviceUsageRepository, bookingRepository);
         this.servicesListActiveBookingsUseCase = new com.hotel.services.application.ListActiveBookingsUseCase(bookingRepository);
@@ -121,6 +125,10 @@ public class AppCompositionRoot {
 
     public RevenuePanel buildRevenuePanel() {
         return new RevenuePanel(getRevenueReportUseCase);
+    }
+    
+    public CustomersPanel buildCustomersPanel() {
+        return new CustomersPanel(listCustomersUseCase);
     }
 
     private Properties loadProperties() {

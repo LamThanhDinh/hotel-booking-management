@@ -12,8 +12,9 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
+import java.time.ZoneId;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 public class BookingPanel extends JPanel {
@@ -32,14 +33,23 @@ public class BookingPanel extends JPanel {
     private final JTextField nameField = new JTextField();
     private final JTextField phoneField = new JTextField();
     private final JTextField identityField = new JTextField();
-    private final JTextField checkInField = new JTextField();
-    private final JTextField checkOutField = new JTextField();
+    private final JSpinner checkInSpinner;
+    private final JSpinner checkOutSpinner;
     private final JLabel resultLabel = new JLabel(" ");
 
     public BookingPanel(CreateBookingUseCase createBookingUseCase, ListRoomsUseCase listRoomsUseCase, Runnable onBookingCreated) {
         this.createBookingUseCase = createBookingUseCase;
         this.listRoomsUseCase = listRoomsUseCase;
         this.onBookingCreated = onBookingCreated;
+        
+        // Khởi tạo date spinners
+        this.checkInSpinner = createDateSpinner();
+        this.checkOutSpinner = createDateSpinner();
+        // Set check-out mặc định là 1 ngày sau check-in
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.DAY_OF_MONTH, 1);
+        checkOutSpinner.setValue(cal.getTime());
+        
         setLayout(new BorderLayout());
         setBackground(CONTENT_BG);
         setBorder(new EmptyBorder(15, 20, 15, 20));
@@ -47,6 +57,16 @@ public class BookingPanel extends JPanel {
         add(buildForm(), BorderLayout.CENTER);
         add(buildFooter(), BorderLayout.SOUTH);
         reloadAvailableRooms();
+    }
+    
+    private JSpinner createDateSpinner() {
+        SpinnerDateModel model = new SpinnerDateModel();
+        JSpinner spinner = new JSpinner(model);
+        JSpinner.DateEditor editor = new JSpinner.DateEditor(spinner, "dd/MM/yyyy");
+        spinner.setEditor(editor);
+        spinner.setFont(LABEL_FONT);
+        spinner.setPreferredSize(new Dimension(250, 32));
+        return spinner;
     }
     
     // Set room ID từ RoomsPanel
@@ -86,8 +106,8 @@ public class BookingPanel extends JPanel {
         addRow(card, gbc, row++, "Tên khách", nameField);
         addRow(card, gbc, row++, "Số điện thoại", phoneField);
         addRow(card, gbc, row++, "Số giấy tờ", identityField);
-        addRow(card, gbc, row++, "Check-in (yyyy-mm-dd)", checkInField);
-        addRow(card, gbc, row++, "Check-out (yyyy-mm-dd)", checkOutField);
+        addRow(card, gbc, row++, "Ngày check-in", checkInSpinner);
+        addRow(card, gbc, row++, "Ngày check-out", checkOutSpinner);
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         buttonPanel.setBackground(Color.WHITE);
@@ -144,6 +164,8 @@ public class BookingPanel extends JPanel {
         input.setFont(LABEL_FONT);
         if (input instanceof JTextField) {
             ((JTextField) input).setPreferredSize(new Dimension(250, 32));
+        } else if (input instanceof JComboBox) {
+            input.setPreferredSize(new Dimension(250, 32));
         }
         panel.add(input, gbc);
     }
@@ -177,13 +199,11 @@ public class BookingPanel extends JPanel {
             showError("Vui lòng nhập hoặc chọn phòng.");
             return;
         }
-        LocalDate checkIn;
-        LocalDate checkOut;
-        try {
-            checkIn = parseDate(checkInField.getText());
-            checkOut = parseDate(checkOutField.getText());
-        } catch (DateTimeParseException ex) {
-            showError("Định dạng ngày không hợp lệ (yyyy-mm-dd).");
+        LocalDate checkIn = dateToLocalDate((Date) checkInSpinner.getValue());
+        LocalDate checkOut = dateToLocalDate((Date) checkOutSpinner.getValue());
+        
+        if (checkOut.isBefore(checkIn) || checkOut.isEqual(checkIn)) {
+            showError("Ngày check-out phải sau ngày check-in.");
             return;
         }
 
@@ -200,6 +220,7 @@ public class BookingPanel extends JPanel {
         if (result.isSuccess()) {
             CreateBookingResponse resp = result.getValue().orElseThrow();
             showInfo("Đặt phòng thành công. BookingId: " + resp.bookingId() + " | Trạng thái phòng: " + resp.roomStatusAfter());
+            clearForm();
             reloadAvailableRooms();
             if (onBookingCreated != null) {
                 onBookingCreated.run();
@@ -209,9 +230,22 @@ public class BookingPanel extends JPanel {
             showError(error.message());
         }
     }
+    
+    private void clearForm() {
+        roomIdField.setText("");
+        nameField.setText("");
+        phoneField.setText("");
+        identityField.setText("");
+        // Reset date spinners về mặc định
+        checkInSpinner.setValue(new Date());
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.DAY_OF_MONTH, 1);
+        checkOutSpinner.setValue(cal.getTime());
+        resultLabel.setText(" ");
+    }
 
-    private LocalDate parseDate(String value) {
-        return LocalDate.parse(value.trim(), DateTimeFormatter.ISO_LOCAL_DATE);
+    private LocalDate dateToLocalDate(Date date) {
+        return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
     }
 
     private String resolveRoomId() {

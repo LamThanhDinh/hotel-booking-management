@@ -2,6 +2,7 @@ package com.hotel.app;
 
 import com.hotel.app.ui.MainFrame;
 import com.hotel.booking.ui.BookingPanel;
+import com.hotel.booking.ui.CustomersPanel;
 import com.hotel.rooms.ui.RoomsPanel;
 import com.hotel.services.ui.ServicesPanel;
 import com.hotel.checkout.ui.CheckoutPanel;
@@ -34,7 +35,8 @@ public class MainApplication {
                 servicesPanel.refreshData();
             });
             RevenuePanel revenuePanel = root.buildRevenuePanel();
-            MainFrame frame = new MainFrame(roomsPanel, bookingPanel, servicesPanel, checkoutPanel, revenuePanel);
+            CustomersPanel customersPanel = root.buildCustomersPanel();
+            MainFrame frame = new MainFrame(roomsPanel, bookingPanel, servicesPanel, checkoutPanel, revenuePanel, customersPanel);
             frame.setVisible(true);
         });
     }

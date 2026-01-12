@@ -69,6 +69,23 @@ public class JdbcCustomerRepository implements CustomerRepository {
         }
         return list;
     }
+    
+    @Override
+    public Optional<Customer> findById(String customerId) {
+        String sql = "SELECT customer_id, full_name, phone, identity_no FROM customers WHERE customer_id = ?";
+        try (Connection conn = connectionProvider.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, customerId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(mapRow(rs));
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to find customer by id", e);
+        }
+        return Optional.empty();
+    }
 
     private Customer mapRow(ResultSet rs) throws SQLException {
         return new Customer(

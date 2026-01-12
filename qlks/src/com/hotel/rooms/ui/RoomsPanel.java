@@ -56,6 +56,9 @@ public class RoomsPanel extends JPanel {
     private final JLabel bedLabel = new JLabel("-");
     private final JLabel priceLabel = new JLabel("-");
     private final JLabel statusLabel = new JLabel("-");
+    private final JLabel customerLabel = new JLabel("-");
+    private final JLabel checkInLabel = new JLabel("-");
+    private final JLabel checkOutLabel = new JLabel("-");
     
     // Action buttons
     private JButton bookButton;
@@ -201,7 +204,7 @@ public class RoomsPanel extends JPanel {
         leftPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
         
         // Header cho grid
-        JLabel gridTitle = new JLabel("So do phong");
+        JLabel gridTitle = new JLabel("Sơ đồ phòng");
         gridTitle.setFont(new Font("Segoe UI", Font.BOLD, 16));
         gridTitle.setForeground(new Color(51, 65, 85));
         gridTitle.setBorder(new EmptyBorder(0, 0, 15, 0));
@@ -259,9 +262,12 @@ public class RoomsPanel extends JPanel {
         addDetailRow(infoPanel, gbc, 3, "Loai giuong:", bedLabel);
         addDetailRow(infoPanel, gbc, 4, "Gia/dem:", priceLabel);
         addDetailRow(infoPanel, gbc, 5, "Trang thai:", statusLabel);
+        addDetailRow(infoPanel, gbc, 6, "Khach hang:", customerLabel);
+        addDetailRow(infoPanel, gbc, 7, "Check-in:", checkInLabel);
+        addDetailRow(infoPanel, gbc, 8, "Check-out:", checkOutLabel);
 
         // Spacer để đẩy info lên trên
-        gbc.gridy = 6;
+        gbc.gridy = 9;
         gbc.weighty = 1;
         infoPanel.add(Box.createVerticalGlue(), gbc);
         
@@ -539,6 +545,17 @@ public class RoomsPanel extends JPanel {
             bedLabel.setText(dto.bedType());
             priceLabel.setText(dto.price());
             statusLabel.setText(dto.status());
+            
+            // Hiển thị thông tin booking nếu có
+            if (dto.customerName() != null && !dto.customerName().isEmpty()) {
+                customerLabel.setText(dto.customerName());
+                checkInLabel.setText(dto.checkInDate());
+                checkOutLabel.setText(dto.checkOutDate());
+            } else {
+                customerLabel.setText("-");
+                checkInLabel.setText("-");
+                checkOutLabel.setText("-");
+            }
             
             // Đổi màu trạng thái
             statusLabel.setForeground(getStatusColor(dto.status()));

@@ -7,6 +7,8 @@ import java.util.Optional;
 
 public interface CustomerRepository {
     Optional<Customer> findByPhoneOrIdentity(String phone, String identityNo);
+    
+    Optional<Customer> findById(String customerId);
 
     Customer save(Customer customer);
 

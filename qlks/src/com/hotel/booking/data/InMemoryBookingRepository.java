@@ -42,6 +42,13 @@ public class InMemoryBookingRepository implements BookingRepository {
     public List<Booking> findAll() {
         return Collections.unmodifiableList(bookings);
     }
+    
+    @Override
+    public Optional<Booking> findActiveByRoomId(String roomId) {
+        return bookings.stream()
+                .filter(b -> b.getRoomId().equalsIgnoreCase(roomId) && b.getStatus() == BookingStatus.ACTIVE)
+                .findFirst();
+    }
 
     private void seed() {
         bookings.add(new Booking(

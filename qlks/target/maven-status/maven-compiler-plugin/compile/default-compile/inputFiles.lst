@@ -7,15 +7,20 @@ D:\QuanLiKhachSan\qlks\src\com\hotel\booking\application\BookingRepository.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\booking\application\CreateBookingRequest.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\booking\application\CreateBookingResponse.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\booking\application\CreateBookingUseCase.java
+D:\QuanLiKhachSan\qlks\src\com\hotel\booking\application\CustomerDTO.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\booking\application\CustomerRepository.java
+D:\QuanLiKhachSan\qlks\src\com\hotel\booking\application\ListCustomersUseCase.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\booking\application\Result.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\booking\data\InMemoryBookingRepository.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\booking\data\InMemoryCustomerRepository.java
+D:\QuanLiKhachSan\qlks\src\com\hotel\booking\data\JdbcBookingRepository.java
+D:\QuanLiKhachSan\qlks\src\com\hotel\booking\data\JdbcCustomerRepository.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\booking\domain\Booking.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\booking\domain\BookingStatus.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\booking\domain\Customer.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\booking\domain\DateRange.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\booking\ui\BookingPanel.java
+D:\QuanLiKhachSan\qlks\src\com\hotel\booking\ui\CustomersPanel.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\checkout\application\CalculateCheckoutUseCase.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\checkout\application\CalculatedCheckoutDTO.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\checkout\application\CheckoutError.java
@@ -27,6 +32,7 @@ D:\QuanLiKhachSan\qlks\src\com\hotel\checkout\application\Result.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\checkout\application\ServiceLineDTO.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\checkout\application\SimpleBookingDTO.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\checkout\data\InMemoryInvoiceRepository.java
+D:\QuanLiKhachSan\qlks\src\com\hotel\checkout\data\JdbcInvoiceRepository.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\checkout\domain\Invoice.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\checkout\domain\InvoiceStatus.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\checkout\ui\CheckoutPanel.java
@@ -47,7 +53,9 @@ D:\QuanLiKhachSan\qlks\src\com\hotel\rooms\application\ListRoomsUseCase.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\rooms\application\RoomDetailDTO.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\rooms\application\RoomRepository.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\rooms\application\RoomSummaryDTO.java
+D:\QuanLiKhachSan\qlks\src\com\hotel\rooms\application\UpdateRoomStatusUseCase.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\rooms\data\InMemoryRoomRepository.java
+D:\QuanLiKhachSan\qlks\src\com\hotel\rooms\data\JdbcRoomRepository.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\rooms\domain\BedType.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\rooms\domain\Money.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\rooms\domain\Room.java
@@ -67,6 +75,8 @@ D:\QuanLiKhachSan\qlks\src\com\hotel\services\application\ServiceRepository.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\services\application\ServiceUsageRepository.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\services\data\InMemoryServiceRepository.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\services\data\InMemoryServiceUsageRepository.java
+D:\QuanLiKhachSan\qlks\src\com\hotel\services\data\JdbcServiceRepository.java
+D:\QuanLiKhachSan\qlks\src\com\hotel\services\data\JdbcServiceUsageRepository.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\services\domain\ServiceItem.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\services\domain\ServiceUsage.java
 D:\QuanLiKhachSan\qlks\src\com\hotel\services\ui\ServicesPanel.java

@@ -11,4 +11,6 @@ public interface BookingRepository {
     Optional<Booking> findById(String bookingId);
 
     List<Booking> findAll();
+    
+    Optional<Booking> findActiveByRoomId(String roomId);
 }

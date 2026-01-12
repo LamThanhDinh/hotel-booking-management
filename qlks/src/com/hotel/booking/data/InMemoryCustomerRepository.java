@@ -41,6 +41,13 @@ public class InMemoryCustomerRepository implements CustomerRepository {
     public List<Customer> findAll() {
         return Collections.unmodifiableList(customers);
     }
+    
+    @Override
+    public Optional<Customer> findById(String customerId) {
+        return customers.stream()
+                .filter(c -> c.getCustomerId().equalsIgnoreCase(customerId))
+                .findFirst();
+    }
 
     private void seed() {
         customers.add(new Customer("CUST-1001", "Nguyen Van A", "0900000001", "ID1001"));
