@@ -1,9 +1,11 @@
 package com.hotel.rooms.ui;
 
+import com.hotel.rooms.application.DeleteRoomUseCase;
 import com.hotel.rooms.application.GetRoomDetailUseCase;
 import com.hotel.rooms.application.ListRoomsUseCase;
 import com.hotel.rooms.application.RoomDetailDTO;
 import com.hotel.rooms.application.RoomSummaryDTO;
+import com.hotel.rooms.application.SaveRoomUseCase;
 import com.hotel.rooms.application.UpdateRoomStatusUseCase;
 import com.hotel.rooms.domain.RoomStatus;
 
@@ -37,6 +39,8 @@ public class RoomsPanel extends JPanel {
     private final ListRoomsUseCase listRoomsUseCase;
     private final GetRoomDetailUseCase getRoomDetailUseCase;
     private final UpdateRoomStatusUseCase updateRoomStatusUseCase;
+    private final SaveRoomUseCase saveRoomUseCase;
+    private final DeleteRoomUseCase deleteRoomUseCase;
     
     // Callbacks for actions
     private Consumer<String> onBookRoom;      // Callback khi đặt phòng (roomId)
@@ -69,10 +73,14 @@ public class RoomsPanel extends JPanel {
     private JPanel actionPanel;
 
     public RoomsPanel(ListRoomsUseCase listRoomsUseCase, GetRoomDetailUseCase getRoomDetailUseCase, 
-                      UpdateRoomStatusUseCase updateRoomStatusUseCase) {
+                      UpdateRoomStatusUseCase updateRoomStatusUseCase,
+                      SaveRoomUseCase saveRoomUseCase,
+                      DeleteRoomUseCase deleteRoomUseCase) {
         this.listRoomsUseCase = listRoomsUseCase;
         this.getRoomDetailUseCase = getRoomDetailUseCase;
         this.updateRoomStatusUseCase = updateRoomStatusUseCase;
+        this.saveRoomUseCase = saveRoomUseCase;
+        this.deleteRoomUseCase = deleteRoomUseCase;
         setLayout(new BorderLayout());
         setBackground(CONTENT_BG);
         setBorder(new EmptyBorder(20, 25, 20, 25));
@@ -133,12 +141,19 @@ public class RoomsPanel extends JPanel {
         searchPanel.add(searchIcon, BorderLayout.WEST);
         searchPanel.add(searchField, BorderLayout.CENTER);
         
+        // Nút Thêm phòng mới
+        JButton addBtn = createStyledButton("Thêm phòng", new Color(34, 197, 94));
+        addBtn.setToolTipText("Thêm phòng mới");
+        addBtn.addActionListener(e -> handleAddRoom());
+        
         // Nút Refresh với style mới
         JButton refreshBtn = createStyledButton("Làm mới", new Color(99, 102, 241));
         refreshBtn.setToolTipText("Làm mới danh sách phòng");
         refreshBtn.addActionListener(e -> refreshRooms());
         
         rightPanel.add(searchPanel);
+        rightPanel.add(addBtn);
+        rightPanel.add(addBtn);
         rightPanel.add(refreshBtn);
 
         panel.add(titlePanel, BorderLayout.WEST);
@@ -335,13 +350,32 @@ public class RoomsPanel extends JPanel {
         actionPanel.add(checkInButton);
         actionPanel.add(markEmptyButton);
         
+        // Nút Sửa thông tin phòng
+        JButton editButton = createActionButton("Sua thong tin", new Color(52, 152, 219));
+        editButton.addActionListener(e -> handleEditRoom());
+        
+        // Nút Xóa phòng
+        JButton deleteButton = createActionButton("Xoa phong", new Color(231, 76, 60));
+        deleteButton.addActionListener(e -> handleDeleteRoom());
+        
+        actionPanel.add(editButton);
+        actionPanel.add(deleteButton);
+        
         // Initially hide all buttons
         hideAllActionButtons();
 
         JPanel wrapperPanel = new JPanel(new BorderLayout());
         wrapperPanel.setOpaque(false);
         wrapperPanel.add(detailTitle, BorderLayout.NORTH);
-        wrapperPanel.add(infoPanel, BorderLayout.CENTER);
+        
+        // Wrap infoPanel in JScrollPane for scrolling
+        JScrollPane infoScrollPane = new JScrollPane(infoPanel);
+        infoScrollPane.setBorder(null);
+        infoScrollPane.setOpaque(false);
+        infoScrollPane.getViewport().setOpaque(false);
+        infoScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        
+        wrapperPanel.add(infoScrollPane, BorderLayout.CENTER);
         wrapperPanel.add(actionPanel, BorderLayout.SOUTH);
         
         panel.add(wrapperPanel, BorderLayout.CENTER);
@@ -829,6 +863,210 @@ public class RoomsPanel extends JPanel {
             }
             
             g2d.dispose();
+        }
+    }
+    
+    private void handleEditRoom() {
+        if (currentRoomId == null) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn phòng để sửa!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        // Create edit dialog
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Sửa thông tin phòng", true);
+        dialog.setLayout(new BorderLayout(10, 10));
+        dialog.setSize(400, 250);
+        dialog.setLocationRelativeTo(this);
+        
+        JPanel formPanel = new JPanel(new GridBagLayout());
+        formPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        
+        // Room ID (read-only)
+        gbc.gridx = 0; gbc.gridy = 0;
+        formPanel.add(new JLabel("Mã phòng:"), gbc);
+        gbc.gridx = 1; gbc.weightx = 1;
+        JTextField idField = new JTextField(currentRoomId);
+        idField.setEditable(false);
+        idField.setFocusable(false);
+        idField.setBackground(new Color(220, 220, 220));
+        idField.setForeground(new Color(100, 100, 100));
+        formPanel.add(idField, gbc);
+        
+        // Room Name
+        gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0;
+        formPanel.add(new JLabel("Tên phòng:"), gbc);
+        gbc.gridx = 1; gbc.weightx = 1;
+        JTextField nameField = new JTextField(nameLabel.getText());
+        formPanel.add(nameField, gbc);
+        
+        // Room Price
+        gbc.gridx = 0; gbc.gridy = 2; gbc.weightx = 0;
+        formPanel.add(new JLabel("Giá phòng:"), gbc);
+        gbc.gridx = 1; gbc.weightx = 1;
+        String priceText = priceLabel.getText().replaceAll("[^0-9.]", "");
+        JTextField priceField = new JTextField(priceText);
+        formPanel.add(priceField, gbc);
+        
+        // Buttons
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton saveBtn = new JButton("Lưu");
+        JButton cancelBtn = new JButton("Hủy");
+        
+        saveBtn.addActionListener(e -> {
+            try {
+                String newName = nameField.getText().trim();
+                String priceStr = priceField.getText().trim();
+                
+                if (newName.isEmpty() || priceStr.isEmpty()) {
+                    JOptionPane.showMessageDialog(dialog, "Vui lòng điền đầy đủ thông tin!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                double price = Double.parseDouble(priceStr);
+                saveRoomUseCase.execute(currentRoomId, newName, java.math.BigDecimal.valueOf(price));
+                
+                JOptionPane.showMessageDialog(dialog, "Cập nhật thông tin phòng thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                refreshRooms();
+                loadDetail(currentRoomId);
+                dialog.dispose();
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(dialog, "Giá phòng phải là số!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(dialog, "Lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        
+        cancelBtn.addActionListener(e -> dialog.dispose());
+        
+        buttonPanel.add(saveBtn);
+        buttonPanel.add(cancelBtn);
+        
+        dialog.add(formPanel, BorderLayout.CENTER);
+        dialog.add(buttonPanel, BorderLayout.SOUTH);
+        dialog.setVisible(true);
+    }
+    
+    private void handleAddRoom() {
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Thêm phòng mới", true);
+        dialog.setSize(400, 350);
+        dialog.setLocationRelativeTo(this);
+        dialog.setLayout(new BorderLayout(10, 10));
+        
+        JPanel formPanel = new JPanel(new GridBagLayout());
+        formPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        
+        // Room ID
+        gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0;
+        formPanel.add(new JLabel("Mã phòng:"), gbc);
+        gbc.gridx = 1; gbc.weightx = 1;
+        JTextField idField = new JTextField("R" + System.currentTimeMillis());
+        formPanel.add(idField, gbc);
+        
+        // Room Name
+        gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0;
+        formPanel.add(new JLabel("Tên phòng:"), gbc);
+        gbc.gridx = 1; gbc.weightx = 1;
+        JTextField nameField = new JTextField();
+        formPanel.add(nameField, gbc);
+        
+        // Room Type
+        gbc.gridx = 0; gbc.gridy = 2; gbc.weightx = 0;
+        formPanel.add(new JLabel("Loại phòng:"), gbc);
+        gbc.gridx = 1; gbc.weightx = 1;
+        JComboBox<String> typeCombo = new JComboBox<>(new String[]{"Standard", "Deluxe", "Suite", "VIP"});
+        formPanel.add(typeCombo, gbc);
+        
+        // Bed Type
+        gbc.gridx = 0; gbc.gridy = 3; gbc.weightx = 0;
+        formPanel.add(new JLabel("Loại giường:"), gbc);
+        gbc.gridx = 1; gbc.weightx = 1;
+        JComboBox<String> bedCombo = new JComboBox<>(new String[]{"Single", "Double", "Twin", "King"});
+        formPanel.add(bedCombo, gbc);
+        
+        // Room Price
+        gbc.gridx = 0; gbc.gridy = 4; gbc.weightx = 0;
+        formPanel.add(new JLabel("Giá phòng:"), gbc);
+        gbc.gridx = 1; gbc.weightx = 1;
+        JTextField priceField = new JTextField();
+        formPanel.add(priceField, gbc);
+        
+        // Buttons
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton saveBtn = new JButton("Lưu");
+        JButton cancelBtn = new JButton("Hủy");
+        
+        saveBtn.addActionListener(e -> {
+            try {
+                String roomId = idField.getText().trim();
+                String name = nameField.getText().trim();
+                String roomType = (String) typeCombo.getSelectedItem();
+                String bedType = (String) bedCombo.getSelectedItem();
+                String priceStr = priceField.getText().trim();
+                
+                if (roomId.isEmpty() || name.isEmpty() || priceStr.isEmpty()) {
+                    JOptionPane.showMessageDialog(dialog, "Vui lòng điền đầy đủ thông tin!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                double price = Double.parseDouble(priceStr);
+                
+                // Tạo phòng mới thông qua SaveRoomUseCase
+                // Note: Cần thêm CreateRoomUseCase riêng, tạm thời dùng SaveRoomUseCase
+                saveRoomUseCase.execute(roomId, name, java.math.BigDecimal.valueOf(price));
+                
+                JOptionPane.showMessageDialog(dialog, "Thêm phòng mới thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                refreshRooms();
+                dialog.dispose();
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(dialog, "Giá phòng phải là số!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(dialog, "Lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        
+        cancelBtn.addActionListener(e -> dialog.dispose());
+        
+        buttonPanel.add(saveBtn);
+        buttonPanel.add(cancelBtn);
+        
+        dialog.add(formPanel, BorderLayout.CENTER);
+        dialog.add(buttonPanel, BorderLayout.SOUTH);
+        dialog.setVisible(true);
+    }
+    
+    private void handleDeleteRoom() {
+        if (currentRoomId == null) {
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn phòng để xóa!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        int confirm = JOptionPane.showConfirmDialog(this,
+            "Bạn có chắc muốn xóa phòng: " + nameLabel.getText() + "?\\nChỉ có thể xóa phòng đang trống hoặc đã trả.",
+            "Xác nhận xóa",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.WARNING_MESSAGE);
+        
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                boolean success = deleteRoomUseCase.execute(currentRoomId);
+                if (success) {
+                    JOptionPane.showMessageDialog(this, "Xóa phòng thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                    refreshRooms();
+                    clearDetail();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Không thể xóa phòng! Phòng phải ở trạng thái Trống hoặc Đã trả.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 }

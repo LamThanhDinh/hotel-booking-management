@@ -25,6 +25,8 @@ import com.hotel.revenue.application.GetRevenueReportUseCase;
 import com.hotel.revenue.ui.RevenuePanel;
 import com.hotel.services.application.AddServiceToBookingUseCase;
 import com.hotel.services.application.ListAvailableServicesUseCase;
+import com.hotel.services.application.SaveServiceUseCase;
+import com.hotel.services.application.DeleteServiceUseCase;
 import com.hotel.services.application.ServiceRepository;
 import com.hotel.services.application.ServiceUsageRepository;
 import com.hotel.services.data.InMemoryServiceRepository;
@@ -35,6 +37,8 @@ import com.hotel.services.ui.ServicesPanel;
 import com.hotel.rooms.application.GetRoomDetailUseCase;
 import com.hotel.rooms.application.ListRoomsUseCase;
 import com.hotel.rooms.application.UpdateRoomStatusUseCase;
+import com.hotel.rooms.application.SaveRoomUseCase;
+import com.hotel.rooms.application.DeleteRoomUseCase;
 import com.hotel.rooms.application.RoomRepository;
 import com.hotel.rooms.data.InMemoryRoomRepository;
 import com.hotel.rooms.data.JdbcRoomRepository;
@@ -56,10 +60,14 @@ public class AppCompositionRoot {
     private final ListRoomsUseCase listRoomsUseCase;
     private final GetRoomDetailUseCase getRoomDetailUseCase;
     private final UpdateRoomStatusUseCase updateRoomStatusUseCase;
+    private final SaveRoomUseCase saveRoomUseCase;
+    private final DeleteRoomUseCase deleteRoomUseCase;
     private final CreateBookingUseCase createBookingUseCase;
     private final ListCustomersUseCase listCustomersUseCase;
     private final ListAvailableServicesUseCase listAvailableServicesUseCase;
     private final AddServiceToBookingUseCase addServiceToBookingUseCase;
+    private final SaveServiceUseCase saveServiceUseCase;
+    private final DeleteServiceUseCase deleteServiceUseCase;
     private final com.hotel.services.application.ListActiveBookingsUseCase servicesListActiveBookingsUseCase;
     private final com.hotel.checkout.application.ListActiveBookingsUseCase checkoutListActiveBookingsUseCase;
     private final CalculateCheckoutUseCase calculateCheckoutUseCase;
@@ -96,10 +104,14 @@ public class AppCompositionRoot {
         this.listRoomsUseCase = new ListRoomsUseCase(roomRepository);
         this.getRoomDetailUseCase = new GetRoomDetailUseCase(roomRepository, bookingRepository, customerRepository);
         this.updateRoomStatusUseCase = new UpdateRoomStatusUseCase(roomRepository);
+        this.saveRoomUseCase = new SaveRoomUseCase(roomRepository);
+        this.deleteRoomUseCase = new DeleteRoomUseCase(roomRepository);
         this.createBookingUseCase = new CreateBookingUseCase(bookingRepository, customerRepository, roomRepository);
         this.listCustomersUseCase = new ListCustomersUseCase(customerRepository);
         this.listAvailableServicesUseCase = new ListAvailableServicesUseCase(serviceRepository);
         this.addServiceToBookingUseCase = new AddServiceToBookingUseCase(serviceRepository, serviceUsageRepository, bookingRepository);
+        this.saveServiceUseCase = new SaveServiceUseCase(serviceRepository);
+        this.deleteServiceUseCase = new DeleteServiceUseCase(serviceRepository);
         this.servicesListActiveBookingsUseCase = new com.hotel.services.application.ListActiveBookingsUseCase(bookingRepository);
         this.checkoutListActiveBookingsUseCase = new com.hotel.checkout.application.ListActiveBookingsUseCase(bookingRepository);
         this.calculateCheckoutUseCase = new CalculateCheckoutUseCase(bookingRepository, roomRepository, serviceUsageRepository, serviceRepository);
@@ -108,7 +120,7 @@ public class AppCompositionRoot {
     }
 
     public RoomsPanel buildRoomsPanel() {
-        return new RoomsPanel(listRoomsUseCase, getRoomDetailUseCase, updateRoomStatusUseCase);
+        return new RoomsPanel(listRoomsUseCase, getRoomDetailUseCase, updateRoomStatusUseCase, saveRoomUseCase, deleteRoomUseCase);
     }
 
     public BookingPanel buildBookingPanel(Runnable onBookingCreated) {
@@ -116,7 +128,7 @@ public class AppCompositionRoot {
     }
 
     public ServicesPanel buildServicesPanel() {
-        return new ServicesPanel(listAvailableServicesUseCase, addServiceToBookingUseCase, servicesListActiveBookingsUseCase);
+        return new ServicesPanel(listAvailableServicesUseCase, addServiceToBookingUseCase, servicesListActiveBookingsUseCase, saveServiceUseCase, deleteServiceUseCase);
     }
 
     public CheckoutPanel buildCheckoutPanel(Runnable onCheckoutSuccess) {

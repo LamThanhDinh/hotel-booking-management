@@ -71,9 +71,29 @@ public class BookingPanel extends JPanel {
     
     // Set room ID từ RoomsPanel
     public void setRoomId(String roomId) {
-        roomIdField.setText(roomId);
-        // Focus vào field tên khách
-        nameField.requestFocus();
+        // Kiểm tra phòng có trong danh sách phòng trống không
+        List<RoomSummaryDTO> rooms = listRoomsUseCase.execute(roomId);
+        boolean available = rooms.stream().anyMatch(r -> r.id().equalsIgnoreCase(roomId) && "TRONG".equalsIgnoreCase(r.status()));
+        
+        if (!available) {
+            String currentStatus = rooms.stream()
+                    .filter(r -> r.id().equalsIgnoreCase(roomId))
+                    .map(r -> r.status())
+                    .findFirst()
+                    .orElse("KHÔNG TÌM THẤY");
+            showError("Phòng " + roomId + " không thể đặt! Trạng thái hiện tại: " + currentStatus + 
+                     "\nChỉ có thể đặt phòng có trạng thái TRONG.");
+            return;
+        }
+        
+        // Chọn phòng trong combo box
+        for (int i = 0; i < roomCombo.getItemCount(); i++) {
+            if (roomCombo.getItemAt(i).equals(roomId)) {
+                roomCombo.setSelectedIndex(i);
+                nameField.requestFocus();
+                return;
+            }
+        }
     }
 
     private JComponent buildHeader() {
@@ -101,8 +121,7 @@ public class BookingPanel extends JPanel {
         gbc.weightx = 1;
 
         int row = 0;
-        addRow(card, gbc, row++, "Mã phòng (nhập tay)", roomIdField);
-        addRow(card, gbc, row++, "Phòng (đang trống)", roomCombo);
+        addRow(card, gbc, row++, "Chọn phòng", roomCombo);
         addRow(card, gbc, row++, "Tên khách", nameField);
         addRow(card, gbc, row++, "Số điện thoại", phoneField);
         addRow(card, gbc, row++, "Số giấy tờ", identityField);
@@ -111,14 +130,6 @@ public class BookingPanel extends JPanel {
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         buttonPanel.setBackground(Color.WHITE);
-        JButton checkBtn = new JButton("Kiểm tra phòng trống");
-        checkBtn.setFont(LABEL_FONT);
-        checkBtn.setBackground(new Color(52, 152, 219));
-        checkBtn.setForeground(Color.WHITE);
-        checkBtn.setFocusPainted(false);
-        checkBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        checkBtn.setToolTipText("Kiểm tra xem phòng có đang trống không");
-        checkBtn.addActionListener(e -> checkAvailability());
         JButton createBtn = new JButton("Tạo đặt phòng");
         createBtn.setFont(LABEL_FONT);
         createBtn.setBackground(SUCCESS);
@@ -127,7 +138,6 @@ public class BookingPanel extends JPanel {
         createBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         createBtn.setToolTipText("Tạo đặt phòng mới cho khách");
         createBtn.addActionListener(e -> createBooking());
-        buttonPanel.add(checkBtn);
         buttonPanel.add(createBtn);
 
         gbc.gridx = 0;
@@ -178,25 +188,10 @@ public class BookingPanel extends JPanel {
                 .forEach(r -> roomCombo.addItem(r.id()));
     }
 
-    private void checkAvailability() {
-        String roomId = resolveRoomId();
-        if (roomId == null) {
-            showError("Vui lòng nhập hoặc chọn phòng.");
-            return;
-        }
-        List<RoomSummaryDTO> rooms = listRoomsUseCase.execute(roomId);
-        boolean available = rooms.stream().anyMatch(r -> r.id().equalsIgnoreCase(roomId) && "TRONG".equalsIgnoreCase(r.status()));
-        if (available) {
-            showInfo("Phòng " + roomId + " đang TRỐNG.");
-        } else {
-            showError("Phòng " + roomId + " không trống.");
-        }
-    }
-
     private void createBooking() {
         String roomId = resolveRoomId();
         if (roomId == null) {
-            showError("Vui lòng nhập hoặc chọn phòng.");
+            showError("Vui lòng chọn phòng.");
             return;
         }
         LocalDate checkIn = dateToLocalDate((Date) checkInSpinner.getValue());
@@ -232,7 +227,7 @@ public class BookingPanel extends JPanel {
     }
     
     private void clearForm() {
-        roomIdField.setText("");
+        roomCombo.setSelectedIndex(-1);
         nameField.setText("");
         phoneField.setText("");
         identityField.setText("");
@@ -249,9 +244,6 @@ public class BookingPanel extends JPanel {
     }
 
     private String resolveRoomId() {
-        if (roomIdField.getText() != null && !roomIdField.getText().isBlank()) {
-            return roomIdField.getText().trim();
-        }
         Object selected = roomCombo.getSelectedItem();
         return selected == null ? null : selected.toString();
     }

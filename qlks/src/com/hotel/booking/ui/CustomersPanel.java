@@ -43,6 +43,13 @@ public class CustomersPanel extends JPanel {
         customerTable.setSelectionForeground(Color.WHITE);
         customerTable.setShowHorizontalLines(true);
         customerTable.setGridColor(new Color(220, 220, 220));
+        customerTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        
+        // Set column widths
+        customerTable.getColumnModel().getColumn(0).setPreferredWidth(250); // Mã KH
+        customerTable.getColumnModel().getColumn(1).setPreferredWidth(200); // Họ tên
+        customerTable.getColumnModel().getColumn(2).setPreferredWidth(120); // Số điện thoại
+        customerTable.getColumnModel().getColumn(3).setPreferredWidth(120); // CMND/CCCD
         
         // Zebra striping
         customerTable.setDefaultRenderer(Object.class, new javax.swing.table.DefaultTableCellRenderer() {

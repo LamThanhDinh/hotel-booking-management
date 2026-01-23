@@ -1,0 +1,96 @@
+    
+    private void handleEditRoom() {
+        if (currentRoomId == null) {
+            JOptionPane.showMessageDialog(this, 
+                "Vui lòng chọn phòng để sửa!", 
+                "Thông báo", 
+                JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Sửa thông tin phòng", true);
+        dialog.setLayout(new BorderLayout(10, 10));
+        dialog.setSize(400, 300);
+        dialog.setLocationRelativeTo(this);
+        
+        JPanel formPanel = new JPanel(new GridBagLayout());
+        formPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        
+        JTextField nameField = new JTextField(nameLabel.getText());
+        JTextField priceField = new JTextField(priceLabel.getText().replaceAll("[^0-9.]", ""));
+        
+        int row = 0;
+        gbc.gridx = 0; gbc.gridy = row;
+        formPanel.add(new JLabel("Mã phòng:"), gbc);
+        gbc.gridx = 1;
+        formPanel.add(new JLabel(currentRoomId), gbc);
+        
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        formPanel.add(new JLabel("Tên phòng:"), gbc);
+        gbc.gridx = 1;
+        formPanel.add(nameField, gbc);
+        
+        row++;
+        gbc.gridx = 0; gbc.gridy = row;
+        formPanel.add(new JLabel("Giá (VNĐ):"), gbc);
+        gbc.gridx = 1;
+        formPanel.add(priceField, gbc);
+        
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton saveBtn = new JButton("Lưu");
+        saveBtn.setBackground(new Color(39, 174, 96));
+        saveBtn.setForeground(Color.WHITE);
+        saveBtn.addActionListener(e -> {
+            JOptionPane.showMessageDialog(dialog, 
+                "Chức năng lưu đang được phát triển!",
+                "Thông báo",
+                JOptionPane.INFORMATION_MESSAGE);
+            dialog.dispose();
+        });
+        
+        JButton cancelBtn = new JButton("Hủy");
+        cancelBtn.addActionListener(e -> dialog.dispose());
+        
+        btnPanel.add(saveBtn);
+        btnPanel.add(cancelBtn);
+        
+        dialog.add(formPanel, BorderLayout.CENTER);
+        dialog.add(btnPanel, BorderLayout.SOUTH);
+        dialog.setVisible(true);
+    }
+    
+    private void handleDeleteRoom() {
+        if (currentRoomId == null) {
+            JOptionPane.showMessageDialog(this, 
+                "Vui lòng chọn phòng để xóa!", 
+                "Thông báo", 
+                JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        if ("DANG_SU_DUNG".equalsIgnoreCase(currentRoomStatus) || "DA_DAT".equalsIgnoreCase(currentRoomStatus)) {
+            JOptionPane.showMessageDialog(this, 
+                "Không thể xóa phòng đang được sử dụng hoặc đã đặt!", 
+                "Lỗi", 
+                JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        int confirm = JOptionPane.showConfirmDialog(this,
+            "Bạn có chắc muốn xóa phòng " + currentRoomId + "?",
+            "Xác nhận xóa",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.WARNING_MESSAGE);
+        
+        if (confirm == JOptionPane.YES_OPTION) {
+            JOptionPane.showMessageDialog(this, 
+                "Chức năng xóa đang được phát triển!",
+                "Thông báo",
+                JOptionPane.INFORMATION_MESSAGE);
+        }
+    }

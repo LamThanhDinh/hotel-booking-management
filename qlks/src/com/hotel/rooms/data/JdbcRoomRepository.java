@@ -32,12 +32,13 @@ public class JdbcRoomRepository implements RoomRepository {
     @Override
     public List<Room> searchByKeyword(String keyword) {
         String sql = "SELECT room_id, room_name, room_type, bed_type, price_amount, currency, status FROM rooms " +
-                "WHERE room_name LIKE ? OR room_type LIKE ? OR bed_type LIKE ?";
+                "WHERE room_id LIKE ? OR room_name LIKE ? OR room_type LIKE ? OR bed_type LIKE ?";
         String like = "%" + (keyword == null ? "" : keyword.trim()) + "%";
         return queryRooms(sql, stmt -> {
             stmt.setString(1, like);
             stmt.setString(2, like);
             stmt.setString(3, like);
+            stmt.setString(4, like);
         });
     }
 

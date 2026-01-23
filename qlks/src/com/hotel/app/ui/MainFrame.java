@@ -80,13 +80,13 @@ public class MainFrame extends JFrame {
             updateStatus("Đặt phòng: " + roomId);
         });
         
-        // Khi click "Thanh toán" từ RoomsPanel  
+        // Khi click "Trả phòng" từ RoomsPanel  
         roomsPanel.setOnCheckoutRoom(roomId -> {
-            navigateTo("Thanh toán", 2);
+            navigateTo("Trả phòng", 2);
             if (checkoutPanel != null) {
                 checkoutPanel.setRoomIdForCheckout(roomId);
             }
-            updateStatus("Thanh toán phòng: " + roomId);
+            updateStatus("Trả phòng: " + roomId);
         });
     }
     
@@ -105,7 +105,7 @@ public class MainFrame extends JFrame {
     private void initScreens(RoomsPanel roomsPanel, BookingPanel bookingPanel, ServicesPanel servicesPanel, CheckoutPanel checkoutPanel, RevenuePanel revenuePanel, CustomersPanel customersPanel) {
         screens.put("Phòng", roomsPanel);
         screens.put("Đặt phòng", bookingPanel);
-        screens.put("Thanh toán", checkoutPanel);
+        screens.put("Trả phòng", checkoutPanel);
         screens.put("Dịch vụ", servicesPanel);
         screens.put("Khách hàng", customersPanel);
         screens.put("Doanh thu", revenuePanel);
@@ -349,7 +349,7 @@ public class MainFrame extends JFrame {
 
     private void setupKeyboardShortcuts() {
         // F1-F6 để chuyển tab
-        String[] keys = {"Phòng", "Đặt phòng", "Thanh toán", "Dịch vụ", "Khách hàng", "Doanh thu"};
+        String[] keys = {"Phòng", "Đặt phòng", "Trả phòng", "Dịch vụ", "Khách hàng", "Doanh thu"};
         for (int i = 0; i < keys.length; i++) {
             final int index = i;
             final String screenName = keys[i];
