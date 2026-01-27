@@ -14,10 +14,16 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Properties;
+
+import com.formdev.flatlaf.FlatClientProperties;
+import com.hotel.common.data.MySqlConnectionProvider;
 
 public class MainFrame extends JFrame {
     // Màu chủ đạo - Palette hiện đại
@@ -31,14 +37,27 @@ public class MainFrame extends JFrame {
     private static final Color STATUS_BG = new Color(30, 41, 59);            // Status bar
     private static final Color ACCENT = new Color(34, 197, 94);              // Xanh lá accent
     
-    // Icons cho menu (Unicode symbols)
-    private static final String[] MENU_ICONS = {"#", "+", "$", "*", "@", "%"};
+        // Icons cho menu (vector icons to avoid missing glyphs on some fonts)
+        // Order matches initScreens(): Phòng, Đặt phòng, Trả phòng, Dịch vụ, Khách hàng, Doanh thu
+        private static final Icon[] MENU_ICONS = {
+            Icons.home(16, Color.WHITE),
+            Icons.booking(16, Color.WHITE),
+            Icons.checkout(16, Color.WHITE),
+            Icons.services(16, Color.WHITE),
+            Icons.customer(16, Color.WHITE),
+            Icons.revenue(16, Color.WHITE)
+        };
 
     private final CardLayout cardLayout = new CardLayout();
     private final JPanel contentPanel = new JPanel(cardLayout);
     private final Map<String, JPanel> screens = new LinkedHashMap<>();
     private JLabel statusLabel;
     private JLabel timeLabel;
+    private JLabel dbDotLabel;
+    private JLabel dbTextLabel;
+
+    private JLabel pageTitleLabel;
+    private JLabel pageSubtitleLabel;
     
     // References to panels
     private BookingPanel bookingPanel;
@@ -60,7 +79,13 @@ public class MainFrame extends JFrame {
         initScreens(roomsPanel, bookingPanel, servicesPanel, checkoutPanel, revenuePanel, customersPanel);
         setLayout(new BorderLayout());
         add(buildSidebar(), BorderLayout.WEST);
-        add(contentPanel, BorderLayout.CENTER);
+
+        JPanel center = new JPanel(new BorderLayout());
+        center.setBackground(CONTENT_BG);
+        center.add(buildTopBar(), BorderLayout.NORTH);
+        center.add(contentPanel, BorderLayout.CENTER);
+        add(center, BorderLayout.CENTER);
+
         add(buildStatusBar(), BorderLayout.SOUTH);
         
         setupKeyboardShortcuts();
@@ -68,6 +93,10 @@ public class MainFrame extends JFrame {
         
         // Setup room action callbacks
         setupRoomActions(roomsPanel);
+
+        // Set initial header state and DB indicator
+        setCurrentScreen("Phòng");
+        refreshDbStatusAsync();
     }
     
     private void setupRoomActions(RoomsPanel roomsPanel) {
@@ -92,6 +121,7 @@ public class MainFrame extends JFrame {
     
     private void navigateTo(String screenName, int menuIndex) {
         cardLayout.show(contentPanel, screenName);
+        setCurrentScreen(screenName);
         // Update menu selection
         if (menuButtons != null && menuIndex >= 0 && menuIndex < menuButtons.length) {
             for (JPanel btn : menuButtons) {
@@ -207,6 +237,7 @@ public class MainFrame extends JFrame {
                     btn.putClientProperty("selected", true);
                     btn.repaint();
                     cardLayout.show(contentPanel, name);
+                    setCurrentScreen(name);
                     updateStatus("Đang xem: " + name);
                 }
                 
@@ -239,7 +270,7 @@ public class MainFrame extends JFrame {
         return panel;
     }
     
-    private JPanel createMenuButton(String icon, String text, String shortcut, boolean selected) {
+    private JPanel createMenuButton(Icon icon, String text, String shortcut, boolean selected) {
         JPanel btn = new JPanel(new BorderLayout(10, 0)) {
             @Override
             protected void paintComponent(Graphics g) {
@@ -268,7 +299,7 @@ public class MainFrame extends JFrame {
         btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
         
         // Icon circle
-        JLabel iconLabel = new JLabel(icon) {
+        JLabel iconLabel = new JLabel() {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2d = (Graphics2D) g.create();
@@ -279,8 +310,7 @@ public class MainFrame extends JFrame {
                 super.paintComponent(g);
             }
         };
-        iconLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        iconLabel.setForeground(Color.WHITE);
+        iconLabel.setIcon(icon);
         iconLabel.setHorizontalAlignment(SwingConstants.CENTER);
         iconLabel.setPreferredSize(new Dimension(28, 28));
         
@@ -328,14 +358,13 @@ public class MainFrame extends JFrame {
         // DB Status với icon dot
         JPanel dbPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         dbPanel.setOpaque(false);
-        JLabel dbDot = new JLabel("●");
-        dbDot.setForeground(ACCENT);
-        dbDot.setFont(new Font("Segoe UI", Font.PLAIN, 10));
-        JLabel dbLabel = new JLabel("Connected");
-        dbLabel.setForeground(ACCENT);
-        dbLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        dbPanel.add(dbDot);
-        dbPanel.add(dbLabel);
+        dbDotLabel = new JLabel();
+        dbDotLabel.setIcon(Icons.dot(8, new Color(148, 163, 184)));
+        dbTextLabel = new JLabel("In-memory");
+        dbTextLabel.setForeground(new Color(148, 163, 184));
+        dbTextLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        dbPanel.add(dbDotLabel);
+        dbPanel.add(dbTextLabel);
 
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 25, 0));
         rightPanel.setOpaque(false);
@@ -345,6 +374,164 @@ public class MainFrame extends JFrame {
         panel.add(statusLabel, BorderLayout.WEST);
         panel.add(rightPanel, BorderLayout.EAST);
         return panel;
+    }
+
+    private JPanel buildTopBar() {
+        JPanel bar = new JPanel(new BorderLayout(12, 0));
+        bar.setBackground(CONTENT_BG);
+        bar.setBorder(new EmptyBorder(18, 22, 12, 22));
+
+        JPanel titlePanel = new JPanel();
+        titlePanel.setOpaque(false);
+        titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
+
+        pageTitleLabel = new JLabel("Phòng");
+        pageTitleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        pageTitleLabel.setForeground(new Color(15, 23, 42));
+
+        pageSubtitleLabel = new JLabel("F1–F6 để chuyển nhanh");
+        pageSubtitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        pageSubtitleLabel.setForeground(new Color(100, 116, 139));
+
+        titlePanel.add(pageTitleLabel);
+        titlePanel.add(Box.createVerticalStrut(2));
+        titlePanel.add(pageSubtitleLabel);
+
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        actions.setOpaque(false);
+
+        JButton refreshButton = new JButton("Làm mới");
+        refreshButton.setIcon(Icons.refresh(16, new Color(71, 85, 105)));
+        refreshButton.putClientProperty(FlatClientProperties.BUTTON_TYPE, FlatClientProperties.BUTTON_TYPE_TOOLBAR_BUTTON);
+        refreshButton.setFocusable(false);
+        refreshButton.addActionListener(e -> refreshCurrentScreen());
+
+        JButton helpButton = new JButton("Phím tắt");
+        helpButton.putClientProperty(FlatClientProperties.BUTTON_TYPE, FlatClientProperties.BUTTON_TYPE_TOOLBAR_BUTTON);
+        helpButton.setFocusable(false);
+        helpButton.addActionListener(e -> showShortcutsDialog());
+
+        actions.add(refreshButton);
+        actions.add(helpButton);
+
+        bar.add(titlePanel, BorderLayout.WEST);
+        bar.add(actions, BorderLayout.EAST);
+        return bar;
+    }
+
+    private void setCurrentScreen(String screenName) {
+        if (pageTitleLabel != null) {
+            pageTitleLabel.setText(screenName);
+        }
+        if (pageSubtitleLabel != null) {
+            switch (screenName) {
+                case "Phòng" -> pageSubtitleLabel.setText("Xem nhanh trạng thái & thao tác phòng");
+                case "Đặt phòng" -> pageSubtitleLabel.setText("Tạo booking mới và chọn phòng");
+                case "Trả phòng" -> pageSubtitleLabel.setText("Tính tiền, dịch vụ và xuất hoá đơn");
+                case "Dịch vụ" -> pageSubtitleLabel.setText("Quản lý dịch vụ và sử dụng dịch vụ");
+                case "Khách hàng" -> pageSubtitleLabel.setText("Danh sách khách hàng");
+                case "Doanh thu" -> pageSubtitleLabel.setText("Báo cáo doanh thu theo hoá đơn");
+                default -> pageSubtitleLabel.setText("F1–F6 để chuyển nhanh");
+            }
+        }
+    }
+
+    private void refreshCurrentScreen() {
+        String currentName = pageTitleLabel != null ? pageTitleLabel.getText() : null;
+        if (currentName == null || currentName.isBlank()) {
+            return;
+        }
+        JPanel panel = screens.get(currentName);
+        if (panel == null) {
+            updateStatus(">> Không tìm thấy màn hình: " + currentName);
+            return;
+        }
+
+        // Best-effort refresh: call refreshData() if present
+        try {
+            panel.getClass().getMethod("refreshData").invoke(panel);
+            updateStatus(">> Đã làm mới: " + currentName);
+        } catch (NoSuchMethodException ignored) {
+            updateStatus(">> Màn hình này không hỗ trợ làm mới");
+        } catch (Exception ex) {
+            updateStatus(">> Lỗi làm mới: " + ex.getClass().getSimpleName());
+        }
+    }
+
+    private void showShortcutsDialog() {
+        String message = "Phím tắt:\n" +
+                "- F1: Phòng\n" +
+                "- F2: Đặt phòng\n" +
+                "- F3: Trả phòng\n" +
+                "- F4: Dịch vụ\n" +
+                "- F5: Khách hàng\n" +
+                "- F6: Doanh thu\n";
+        JOptionPane.showMessageDialog(this, message, "Phím tắt", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void refreshDbStatusAsync() {
+        Properties props = loadProperties();
+        boolean enabled = Boolean.parseBoolean(props.getProperty("db.enabled", "false"));
+
+        if (dbDotLabel == null || dbTextLabel == null) {
+            return;
+        }
+
+        if (!enabled) {
+            setDbIndicator(new Color(148, 163, 184), "In-memory", "db.enabled=false (không dùng MySQL)");
+            return;
+        }
+
+        // Show checking state immediately
+        setDbIndicator(new Color(251, 191, 36), "MySQL (đang kiểm tra...)", null);
+
+        SwingWorker<Void, Void> worker = new SwingWorker<>() {
+            private Exception failure;
+
+            @Override
+            protected Void doInBackground() {
+                try {
+                    MySqlConnectionProvider provider = MySqlConnectionProvider.fromProperties(props);
+                    try (var conn = provider.openNewConnection()) {
+                        // ok
+                    }
+                } catch (Exception ex) {
+                    failure = ex;
+                }
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                if (failure == null) {
+                    setDbIndicator(ACCENT, "MySQL connected", "db.enabled=true");
+                } else {
+                    setDbIndicator(new Color(239, 68, 68), "MySQL lỗi kết nối", failure.getMessage());
+                }
+            }
+        };
+        worker.execute();
+    }
+
+    private void setDbIndicator(Color color, String text, String tooltip) {
+        if (dbDotLabel != null) {
+            dbDotLabel.setIcon(Icons.dot(8, color));
+        }
+        if (dbTextLabel != null) {
+            dbTextLabel.setForeground(color);
+            dbTextLabel.setText(text);
+            dbTextLabel.setToolTipText(tooltip);
+        }
+    }
+
+    private Properties loadProperties() {
+        Properties properties = new Properties();
+        try (FileInputStream fis = new FileInputStream("app.properties")) {
+            properties.load(fis);
+        } catch (IOException ignored) {
+            // defaults
+        }
+        return properties;
     }
 
     private void setupKeyboardShortcuts() {

@@ -10,12 +10,22 @@ import com.hotel.revenue.ui.RevenuePanel;
 
 import javax.swing.*;
 import com.formdev.flatlaf.FlatLightLaf;
+import com.formdev.flatlaf.FlatLaf;
+import java.awt.*;
 
 public class MainApplication {
     public static void main(String[] args) {
+        // Better text rendering on Windows
+        System.setProperty("awt.useSystemAAFontSettings", "on");
+        System.setProperty("swing.aatext", "true");
+
         // Áp dụng FlatLaf Look and Feel hiện đại
         try {
             FlatLightLaf.setup();
+            // Keep typography consistent across the app
+            Font defaultFont = new Font("Segoe UI", Font.PLAIN, 13);
+            FlatLaf.setPreferredFontFamily("Segoe UI");
+            UIManager.put("defaultFont", defaultFont);
             UIManager.put("Button.arc", 10);
             UIManager.put("Component.arc", 10);
             UIManager.put("TextComponent.arc", 8);

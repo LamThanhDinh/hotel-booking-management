@@ -8,6 +8,8 @@ import com.hotel.rooms.application.RoomSummaryDTO;
 import com.hotel.rooms.application.SaveRoomUseCase;
 import com.hotel.rooms.application.UpdateRoomStatusUseCase;
 import com.hotel.rooms.domain.RoomStatus;
+import com.hotel.app.ui.Icons;
+import com.formdev.flatlaf.FlatClientProperties;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -17,6 +19,7 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.geom.RoundRectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -48,6 +51,7 @@ public class RoomsPanel extends JPanel {
 
     private final JTextField searchField = new JTextField();
     private final JPanel roomsGrid = new JPanel();
+    private final JLabel emptyStateLabel = new JLabel("Không có phòng nào phù hợp", SwingConstants.CENTER);
     private final List<RoomCard> roomCards = new ArrayList<>();
     private RoomCard selectedCard = null;
     private String currentRoomId = null;
@@ -114,9 +118,8 @@ public class RoomsPanel extends JPanel {
 
         JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         titlePanel.setBackground(CONTENT_BG);
-        JLabel icon = new JLabel("# ");
-        icon.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        icon.setForeground(PRIMARY);
+        JLabel icon = new JLabel(Icons.home(18, PRIMARY));
+        icon.setBorder(new EmptyBorder(0, 0, 0, 8));
         JLabel lbl = new JLabel("Quản lý Phòng");
         lbl.setFont(TITLE_FONT);
         lbl.setForeground(new Color(30, 41, 59));
@@ -133,11 +136,13 @@ public class RoomsPanel extends JPanel {
             BorderFactory.createLineBorder(new Color(226, 232, 240), 1),
             new EmptyBorder(8, 12, 8, 12)
         ));
-        JLabel searchIcon = new JLabel("O ");
-        searchIcon.setForeground(new Color(148, 163, 184));
+        JLabel searchIcon = new JLabel(Icons.search(16, new Color(148, 163, 184)));
+        searchIcon.setBorder(new EmptyBorder(0, 0, 0, 8));
         searchField.setBorder(null);
-        searchField.setPreferredSize(new Dimension(180, 20));
+        searchField.setPreferredSize(new Dimension(220, 20));
         searchField.setFont(LABEL_FONT);
+        searchField.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Tìm theo mã/tên/loại phòng...");
+        searchField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
         searchPanel.add(searchIcon, BorderLayout.WEST);
         searchPanel.add(searchField, BorderLayout.CENTER);
         
@@ -152,7 +157,6 @@ public class RoomsPanel extends JPanel {
         refreshBtn.addActionListener(e -> refreshRooms());
         
         rightPanel.add(searchPanel);
-        rightPanel.add(addBtn);
         rightPanel.add(addBtn);
         rightPanel.add(refreshBtn);
 
@@ -226,6 +230,10 @@ public class RoomsPanel extends JPanel {
 
         roomsGrid.setLayout(new GridLayout(0, 4, 12, 12));
         roomsGrid.setOpaque(false);
+
+        emptyStateLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        emptyStateLabel.setForeground(new Color(100, 116, 139));
+        emptyStateLabel.setBorder(new EmptyBorder(60, 20, 60, 20));
         
         JScrollPane scrollPane = new JScrollPane(roomsGrid);
         scrollPane.setBorder(null);
@@ -259,7 +267,7 @@ public class RoomsPanel extends JPanel {
         panel.setBorder(new EmptyBorder(20, 20, 20, 20));
         
         // Header
-        JLabel detailTitle = new JLabel("Chi tiet phong");
+        JLabel detailTitle = new JLabel("Chi tiết phòng");
         detailTitle.setFont(new Font("Segoe UI", Font.BOLD, 16));
         detailTitle.setForeground(new Color(51, 65, 85));
         detailTitle.setBorder(new EmptyBorder(0, 0, 20, 0));
@@ -271,13 +279,13 @@ public class RoomsPanel extends JPanel {
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        addDetailRow(infoPanel, gbc, 0, "Ma phong:", idLabel);
-        addDetailRow(infoPanel, gbc, 1, "Ten phong:", nameLabel);
-        addDetailRow(infoPanel, gbc, 2, "Loai phong:", typeLabel);
-        addDetailRow(infoPanel, gbc, 3, "Loai giuong:", bedLabel);
-        addDetailRow(infoPanel, gbc, 4, "Gia/dem:", priceLabel);
-        addDetailRow(infoPanel, gbc, 5, "Trang thai:", statusLabel);
-        addDetailRow(infoPanel, gbc, 6, "Khach hang:", customerLabel);
+        addDetailRow(infoPanel, gbc, 0, "Mã phòng:", idLabel);
+        addDetailRow(infoPanel, gbc, 1, "Tên phòng:", nameLabel);
+        addDetailRow(infoPanel, gbc, 2, "Loại phòng:", typeLabel);
+        addDetailRow(infoPanel, gbc, 3, "Loại giường:", bedLabel);
+        addDetailRow(infoPanel, gbc, 4, "Giá/đêm:", priceLabel);
+        addDetailRow(infoPanel, gbc, 5, "Trạng thái:", statusLabel);
+        addDetailRow(infoPanel, gbc, 6, "Khách hàng:", customerLabel);
         addDetailRow(infoPanel, gbc, 7, "Check-in:", checkInLabel);
         addDetailRow(infoPanel, gbc, 8, "Check-out:", checkOutLabel);
 
@@ -292,7 +300,7 @@ public class RoomsPanel extends JPanel {
         actionPanel.setBorder(new EmptyBorder(20, 0, 0, 0));
         
         // Nút đặt phòng - cho phòng TRONG
-        bookButton = createActionButton("Dat phong", STATUS_AVAILABLE);
+        bookButton = createActionButton("Đặt phòng", STATUS_AVAILABLE);
         bookButton.addActionListener(e -> {
             if (currentRoomId != null && onBookRoom != null) {
                 onBookRoom.accept(currentRoomId);
@@ -300,7 +308,7 @@ public class RoomsPanel extends JPanel {
         });
         
         // Nút thanh toán - cho phòng DANG_SU_DUNG
-        checkoutButton = createActionButton("Thanh toan", STATUS_OCCUPIED);
+        checkoutButton = createActionButton("Thanh toán", STATUS_OCCUPIED);
         checkoutButton.addActionListener(e -> {
             if (currentRoomId != null && onCheckoutRoom != null) {
                 onCheckoutRoom.accept(currentRoomId);
@@ -308,7 +316,7 @@ public class RoomsPanel extends JPanel {
         });
         
         // Nút check-in - cho phòng DA_DAT
-        checkInButton = createActionButton("Nhan phong", STATUS_RESERVED);
+        checkInButton = createActionButton("Nhận phòng", STATUS_RESERVED);
         checkInButton.addActionListener(e -> {
             if (currentRoomId != null) {
                 updateRoomStatusUseCase.markAsInUse(currentRoomId);
@@ -322,7 +330,7 @@ public class RoomsPanel extends JPanel {
         });
         
         // Nút đánh dấu đã dọn xong - cho phòng DA_TRA (đang dọn)
-        markEmptyButton = createActionButton("Da don xong", STATUS_AVAILABLE);
+        markEmptyButton = createActionButton("Đã dọn xong", STATUS_AVAILABLE);
         markEmptyButton.addActionListener(e -> {
             if (currentRoomId != null) {
                 updateRoomStatusUseCase.markAsEmpty(currentRoomId);
@@ -336,7 +344,7 @@ public class RoomsPanel extends JPanel {
         });
         
         // Nút đánh dấu cần dọn - cho phòng DANG_SU_DUNG (sau checkout)
-        markCleanButton = createActionButton("Can don dep", STATUS_CLEANING);
+        markCleanButton = createActionButton("Cần dọn dẹp", STATUS_CLEANING);
         markCleanButton.addActionListener(e -> {
             if (currentRoomId != null) {
                 updateRoomStatusUseCase.markAsCleaning(currentRoomId);
@@ -351,11 +359,11 @@ public class RoomsPanel extends JPanel {
         actionPanel.add(markEmptyButton);
         
         // Nút Sửa thông tin phòng
-        JButton editButton = createActionButton("Sua thong tin", new Color(52, 152, 219));
+        JButton editButton = createActionButton("Sửa thông tin", new Color(52, 152, 219));
         editButton.addActionListener(e -> handleEditRoom());
         
         // Nút Xóa phòng
-        JButton deleteButton = createActionButton("Xoa phong", new Color(231, 76, 60));
+        JButton deleteButton = createActionButton("Xóa phòng", new Color(231, 76, 60));
         deleteButton.addActionListener(e -> handleDeleteRoom());
         
         actionPanel.add(editButton);
@@ -475,11 +483,11 @@ public class RoomsPanel extends JPanel {
         panel.setOpaque(false);
         panel.setBorder(new EmptyBorder(15, 0, 5, 0));
 
-        panel.add(createLegendItem(STATUS_AVAILABLE, "Trong"));
-        panel.add(createLegendItem(STATUS_OCCUPIED, "Dang su dung"));
-        panel.add(createLegendItem(STATUS_CLEANING, "Dang don"));
-        panel.add(createLegendItem(STATUS_MAINTENANCE, "Bao tri"));
-        panel.add(createLegendItem(STATUS_RESERVED, "Da dat"));
+        panel.add(createLegendItem(STATUS_AVAILABLE, "Trống"));
+        panel.add(createLegendItem(STATUS_OCCUPIED, "Đang sử dụng"));
+        panel.add(createLegendItem(STATUS_CLEANING, "Đang dọn"));
+        panel.add(createLegendItem(STATUS_MAINTENANCE, "Bảo trì"));
+        panel.add(createLegendItem(STATUS_RESERVED, "Đã đặt"));
 
         return panel;
     }
@@ -529,6 +537,21 @@ public class RoomsPanel extends JPanel {
         roomCards.clear();
         selectedCard = null;
 
+        // Empty state
+        if (rooms == null || rooms.isEmpty()) {
+            roomsGrid.setLayout(new BorderLayout());
+            roomsGrid.add(emptyStateLabel, BorderLayout.CENTER);
+            clearDetail();
+            roomsGrid.revalidate();
+            roomsGrid.repaint();
+            return;
+        }
+
+        // Ensure grid layout when there is data
+        if (!(roomsGrid.getLayout() instanceof GridLayout)) {
+            roomsGrid.setLayout(new GridLayout(0, 4, 12, 12));
+        }
+
         for (RoomSummaryDTO room : rooms) {
             RoomCard card = new RoomCard(room);
             card.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -542,11 +565,7 @@ public class RoomsPanel extends JPanel {
         }
 
         // Chọn phòng đầu tiên nếu có
-        if (!roomCards.isEmpty()) {
-            selectRoom(roomCards.get(0));
-        } else {
-            clearDetail();
-        }
+        selectRoom(roomCards.get(0));
 
         roomsGrid.revalidate();
         roomsGrid.repaint();
@@ -652,7 +671,9 @@ public class RoomsPanel extends JPanel {
             this.iconType = getRoomIconType(room.roomType());
             
             setPreferredSize(new Dimension(145, 115));
-            setOpaque(false);
+            // Opaque background avoids black edge artifacts on some GPUs/DPIs.
+            setOpaque(true);
+            setBackground(Color.WHITE);
             setCursor(new Cursor(Cursor.HAND_CURSOR));
             setLayout(new BorderLayout(5, 5));
             setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -832,37 +853,71 @@ public class RoomsPanel extends JPanel {
 
         @Override
         protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+
             Graphics2D g2d = (Graphics2D) g.create();
-            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            
-            int offsetY = isHovered ? -2 : 0;
-            
-            // Shadow
-            if (isHovered || isSelected) {
-                g2d.setColor(new Color(0, 0, 0, 40));
-                g2d.fillRoundRect(4, 6 + offsetY, getWidth() - 4, getHeight() - 4, 16, 16);
+            try {
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+                g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+
+                int hoverLift = isHovered ? -2 : 0;
+                int x = 2;
+                int y = 2 + hoverLift;
+                int w = getWidth() - 6;
+                int h = getHeight() - 8;
+                float arc = 16f;
+
+                if (w <= 0 || h <= 0) {
+                    return;
+                }
+
+                // Soft shadow (multi-layer for smoother look)
+                // Keep shadow very subtle to avoid dark borders
+                if (isHovered) {
+                    Shape s = new RoundRectangle2D.Float(x + 1, y + 5, w, h, arc, arc);
+                    g2d.setColor(new Color(0, 0, 0, 10));
+                    g2d.fill(s);
+                }
+
+                // Gradient background based on status color (less "flat" and avoids banding artifacts)
+                Color top = lighten(statusColor, isHovered ? 0.18f : 0.12f);
+                Color bottom = darken(statusColor, isHovered ? 0.08f : 0.14f);
+                Paint bg = new GradientPaint(0, y, top, 0, y + h, bottom);
+                Shape card = new RoundRectangle2D.Float(x, y, w, h, arc, arc);
+                g2d.setPaint(bg);
+                g2d.fill(card);
+
+                // Subtle gloss overlay
+                Paint gloss = new GradientPaint(0, y, new Color(255, 255, 255, isHovered ? 55 : 35), 0, y + h, new Color(255, 255, 255, 0));
+                g2d.setPaint(gloss);
+                g2d.fill(card);
+
+                // No extra border (keeps edges clean)
+
+                // Selected border
+                if (isSelected) {
+                    g2d.setColor(new Color(255, 255, 255, 220));
+                    g2d.setStroke(new BasicStroke(2.2f));
+                    Shape sel = new RoundRectangle2D.Float(x + 1, y + 1, w - 2, h - 2, arc - 2, arc - 2);
+                    g2d.draw(sel);
+                }
+            } finally {
+                g2d.dispose();
             }
-            
-            // Card background
-            g2d.setColor(statusColor);
-            g2d.fillRoundRect(2, 2 + offsetY, getWidth() - 6, getHeight() - 8, 16, 16);
-            
-            // Gradient overlay
-            GradientPaint gradient = new GradientPaint(
-                0, 0, new Color(255, 255, 255, isHovered ? 70 : 40),
-                0, getHeight(), new Color(0, 0, 0, 20)
-            );
-            g2d.setPaint(gradient);
-            g2d.fillRoundRect(2, 2 + offsetY, getWidth() - 6, getHeight() - 8, 16, 16);
-            
-            // Selected border
-            if (isSelected) {
-                g2d.setColor(Color.WHITE);
-                g2d.setStroke(new BasicStroke(3f));
-                g2d.drawRoundRect(3, 3 + offsetY, getWidth() - 8, getHeight() - 10, 14, 14);
-            }
-            
-            g2d.dispose();
+        }
+
+        private Color lighten(Color c, float amount) {
+            float[] hsb = Color.RGBtoHSB(c.getRed(), c.getGreen(), c.getBlue(), null);
+            hsb[2] = Math.min(1f, hsb[2] + amount);
+            hsb[1] = Math.max(0f, hsb[1] - amount * 0.25f);
+            return Color.getHSBColor(hsb[0], hsb[1], hsb[2]);
+        }
+
+        private Color darken(Color c, float amount) {
+            float[] hsb = Color.RGBtoHSB(c.getRed(), c.getGreen(), c.getBlue(), null);
+            hsb[2] = Math.max(0f, hsb[2] - amount);
+            return Color.getHSBColor(hsb[0], hsb[1], hsb[2]);
         }
     }
     

@@ -22,6 +22,7 @@ com\hotel\checkout\application\ServiceLineDTO.class
 com\hotel\rooms\domain\Room.class
 com\hotel\services\application\ServiceError.class
 com\hotel\booking\domain\BookingStatus.class
+com\hotel\app\ui\Icons.class
 com\hotel\booking\ui\CustomersPanel$CustomerTableModel.class
 com\hotel\checkout\data\JdbcInvoiceRepository$SqlConsumer.class
 com\hotel\services\application\ListAvailableServicesUseCase.class
@@ -33,8 +34,10 @@ com\hotel\booking\domain\Booking.class
 com\hotel\app\ui\MainFrame$2.class
 com\hotel\services\ui\ServicesPanel$ServicesTableModel.class
 com\hotel\services\domain\ServiceItem.class
+com\hotel\app\ui\MainFrame$9.class
 com\hotel\booking\data\JdbcBookingRepository.class
 com\hotel\checkout\data\JdbcInvoiceRepository.class
+com\hotel\app\ui\Icons$Painter.class
 Main.class
 com\hotel\checkout\application\CheckoutUseCase.class
 com\hotel\revenue\ui\RevenuePanel.class
@@ -105,6 +108,7 @@ com\hotel\checkout\application\ListActiveBookingsUseCase.class
 com\hotel\rooms\ui\RoomsPanel$5.class
 com\hotel\services\ui\ServicesPanel$1.class
 com\hotel\app\ui\MainFrame$6.class
+com\hotel\app\ui\Icons$VectorIcon.class
 com\hotel\services\application\SaveServiceUseCase.class
 com\hotel\booking\domain\Customer.class
 com\hotel\rooms\application\UpdateRoomStatusUseCase$1.class
